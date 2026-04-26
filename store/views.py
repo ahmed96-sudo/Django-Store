@@ -4,13 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContactForm, LoginForm, RegisterForm, ReviewForm
 from .models import Product, Categories, Profile, CartItem, Order, OrderItem, Review, Contact, Newsletter, Wishlist, Payment
-from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, View
 from django.urls import reverse, reverse_lazy
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.db import IntegrityError
+from django.db.models import F
+from django.shortcuts import redirect, get_object_or_404
 
-from store import forms
 
 # Create your views here.
 
@@ -162,6 +163,12 @@ class CartView(LoginRequiredMixin, ListView):
     model = CartItem
     template_name = 'store/cart.html'
     context_object_name = 'cart_items'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'You must be logged in to view your cart.')
+            return redirect('login')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return CartItem.objects.filter(user=self.request.user)
@@ -171,6 +178,38 @@ class CartView(LoginRequiredMixin, ListView):
         cart_items = self.get_queryset()
         context['total_price'] = sum(item.itemprice for item in cart_items)
         return context
+
+class AddToCartView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
+    permission_denied_message = "You must be logged in to add items to your cart."
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'You must be logged in to add items to your cart.')
+            return redirect('login')
+        if request.method != 'POST':
+            messages.error(request, 'Invalid request method.')
+            return redirect('product_list')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        product_id = self.request.POST.get('product_id')
+        if not product_id:
+            messages.error(request, 'Invalid product selection.')
+            return redirect('product_list')
+        product = get_object_or_404(Product, id=product_id)
+        updated_stock = Product.objects.filter(id=product.id, stock__gt=0).update(stock=F('stock') - 1)
+        if not updated_stock:
+            messages.error(request, 'Sorry, this product is out of stock.')
+            return redirect('product_list')
+        cart_item, created = CartItem.objects.get_or_create(user=request.user, product=product, defaults={'quantity': 1, 'itemprice': product.price})
+        if not created:
+            cart_item.quantity += 1
+            cart_item.itemprice += product.price
+            cart_item.save()
+        
+        messages.success(request, f'Added {product.name} to your cart.')
+        return redirect('product_list')
 
 # @login_required
 # def checkout(request):

@@ -2,6 +2,13 @@
 {% block title %}Product List - E-Commerce Store{% endblock %}
 
 {% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
     <h2>Categories</h2>
     <ul>
         <li><a href="{% url 'product_list' %}">All</a></li>
@@ -21,6 +28,22 @@
             <p>Category: {{ product.category.name }}</p>
             <p>Price: ${{ product.price }}</p>
         </a>
+        {% if product.stock < 5 and product.stock > 0 %}
+            <p>Hurry! Only {{ product.stock }} left in stock.</p>
+            <form method="post" action="{% url 'add_to_cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% elif product.stock > 5 %}
+            <form method="post" action="{% url 'add_to_cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% else %}
+            <p><strong>Out of Stock</strong></p>
+        {% endif %}
     {% endfor %}
     
     {% if is_paginated %}

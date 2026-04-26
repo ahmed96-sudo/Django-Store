@@ -1,6 +1,13 @@
 {% extends 'store/base.html' %}
 {% block title %}Home - E-Commerce Store{% endblock %}
 {% block content %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     <h2>Welcome to Our E-Commerce Store</h2>
     <p>Discover our latest products and enjoy exclusive deals!</p>
     {% for product in products %}
@@ -9,15 +16,24 @@
             <p>{{ product.description }}</p>
             <p>Price: ${{ product.price }}</p>
         </a>
+        {% if product.stock < 5 and product.stock > 0 %}
+            <p>Hurry! Only {{ product.stock }} left in stock.</p>
+            <form method="post" action="{% url 'add_to_cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% elif product.stock > 5 %}
+            <form method="post" action="{% url 'add_to_cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <button type="submit">Add to Cart</button>
+            </form>
+        {% else %}
+            <p><strong>Out of Stock</strong></p>
+        {% endif %}
     {% endfor %}
     <p>Landing page</p>
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

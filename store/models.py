@@ -1,4 +1,4 @@
-from django.db.models import Model, Index, EmailField, CharField, DecimalField, ForeignKey, DateTimeField, IntegerField, OneToOneField, TextField, CASCADE
+from django.db.models import Model, Index, EmailField, CharField, DecimalField, ForeignKey, DateTimeField, IntegerField, OneToOneField, TextField, CASCADE, PositiveIntegerField
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -10,8 +10,8 @@ class Product(Model):
     description = TextField()
     price = DecimalField(max_digits=10, decimal_places=2)
     category = ForeignKey('Categories', on_delete=CASCADE, related_name='products')
-    stock = IntegerField()
-    views = IntegerField(default=0)
+    stock = PositiveIntegerField()
+    views = PositiveIntegerField(default=0)
     created_at = DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -38,11 +38,11 @@ class Profile(Model):
 class CartItem(Model):
     user = ForeignKey(User, on_delete=CASCADE)
     product = ForeignKey(Product, on_delete=CASCADE)
-    quantity = IntegerField(default=1)
+    quantity = PositiveIntegerField(default=1)
     itemprice = DecimalField(max_digits=10, decimal_places=2, default=0)
+    # expiry_date = DateTimeField(default=timezone.now() + timezone.timedelta(hours=1))
     
     class Meta:
-        unique_together = ('user', 'product')
         indexes = [
             Index(fields=['user']),
         ]
@@ -60,7 +60,7 @@ class Order(Model):
 class OrderItem(Model):
     order = ForeignKey(Order, on_delete=CASCADE)
     product = ForeignKey(Product, on_delete=CASCADE)
-    quantity = IntegerField(default=1)
+    quantity = PositiveIntegerField(default=1)
     price = DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
@@ -69,7 +69,7 @@ class OrderItem(Model):
 class Review(Model):
     user = ForeignKey(User, on_delete=CASCADE)
     product = ForeignKey(Product, on_delete=CASCADE)
-    rating = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    rating = PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = TextField()
     created_at = DateTimeField(auto_now_add=True)
 

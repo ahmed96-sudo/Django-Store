@@ -13,7 +13,23 @@
     <p>{{ data.description }}</p>
     <p>Price: ${{ data.price }}</p>
     <p>Category: {{ data.category.name }}</p>
-    
+    {% if data.stock < 5 and data.stock > 0 %}
+        <p>Hurry! Only {{ data.stock }} left in stock.</p>
+        <form method="post" action="{% url 'add_to_cart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ data.id }}">
+            <button type="submit">Add to Cart</button>
+        </form>
+    {% elif data.stock > 5 %}
+        <form method="post" action="{% url 'add_to_cart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ data.id }}">
+            <button type="submit">Add to Cart</button>
+        </form>
+    {% else %}
+        <p><strong>Out of Stock</strong></p>
+    {% endif %}
+
     <h3>Reviews</h3>
     {% for review in reviews %}
         <div>
