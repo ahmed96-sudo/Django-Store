@@ -1,13 +1,11 @@
 import os
-
-# from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 # from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-
 from .forms import ContactForm, LoginForm, RegisterForm, ReviewForm
 from .models import Product, Categories, Profile, CartItem, Order, OrderItem, Review, Contact, Newsletter, Wishlist, Payment
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.core.mail import send_mail
 from django.contrib import messages
@@ -65,7 +63,7 @@ class ContactView(FormView):
 class ThanksView(TemplateView):
     template_name = 'store/thanks.html'
 
-class ProductDetailView(DetailView, FormView):
+class ProductDetailView(DetailView, CreateView):
     model = Product
     template_name = 'store/product_detail.html'
     context_object_name = 'data'
@@ -120,9 +118,9 @@ class ProductListView(ListView):
         context['categories'] = Categories.objects.all()
         return context
 
-class LoginView(FormView):
+class LoginCustomView(LoginView):
     template_name = 'store/login.html'
-    form_class = LoginForm
+    authentication_form = LoginForm
     success_url = reverse_lazy('home')
 
     def form_valid(self, form):
@@ -142,8 +140,9 @@ class LoginView(FormView):
             messages.error(self.request, 'Invalid username or password. Please try again.')
             return self.form_invalid(form)
 
-class LogoutView(TemplateView):
-    template_name = 'store/logout.html'
+class LogoutCustomView(LogoutView):
+    template_name = None
+    next_page = reverse_lazy('login')
 
     def get(self, request, *args, **kwargs):
         logout(request)
