@@ -148,7 +148,7 @@ class LogoutCustomView(LogoutView):
         logout(request)
         return super().get(request, *args, **kwargs)
 
-class RegisterView(FormView):
+class RegisterView(CreateView):
     template_name = 'store/register.html'
     form_class = RegisterForm
     success_url = reverse_lazy('login')
