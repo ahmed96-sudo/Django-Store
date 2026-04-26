@@ -1,0 +1,38 @@
+{% extends "store/base.html" %}
+{% block title %}{{ data.name }} - E-Commerce Store{% endblock %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    <h2>{{ data.name }}</h2>
+    <p>{{ data.description }}</p>
+    <p>Price: ${{ data.price }}</p>
+    <p>Category: {{ data.category.name }}</p>
+    
+    <h3>Reviews</h3>
+    {% for review in reviews %}
+        <div>
+            <strong>{{ review.user.username }}</strong> - {{ review.rating }} stars
+            <p>{{ review.comment }}</p>
+        </div>
+    {% empty %}
+        <p>No reviews yet.</p>
+    {% endfor %}
+    
+    {% if user.is_authenticated %}
+        <h3>Submit a Review</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Submit Review</button>
+        </form>
+    {% else %}
+        <p>Please <a href="{% url 'login' %}">log in</a> to submit a review.</p>
+    {% endif %}
+    <a href="{% url 'product_list' %}">Back to Product List</a>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "store/base.html" %}
+{% block title %}Product List - E-Commerce Store{% endblock %}
+
+{% block content %}
+    <h2>Categories</h2>
+    <ul>
+        <li><a href="{% url 'product_list' %}">All</a></li>
+        {% for category in categories %}
+            <li><a href="{% url 'product_list' %}?category={{ category.id }}">{{ category.name }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Product List</h2>
+    {% if not products %}
+        <p>No products available.</p>
+    {% endif %}
+    {% for product in products %}
+        <a href="{% url 'product_detail' pk=product.id %}">
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <p>Category: {{ product.category.name }}</p>
+            <p>Price: ${{ product.price }}</p>
+        </a>
+    {% endfor %}
+    
+    {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

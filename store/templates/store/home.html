@@ -1,0 +1,26 @@
+{% extends 'store/base.html' %}
+{% block title %}Home - E-Commerce Store{% endblock %}
+{% block content %}
+    <h2>Welcome to Our E-Commerce Store</h2>
+    <p>Discover our latest products and enjoy exclusive deals!</p>
+    {% for product in products %}
+        <a href="{% url 'product_detail' pk=product.id %}">
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <p>Price: ${{ product.price }}</p>
+        </a>
+    {% endfor %}
+    <p>Landing page</p>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send Message</button>
+    </form>
+{% endblock %}
