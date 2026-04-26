@@ -5,10 +5,11 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import ContactForm, LoginForm, RegisterForm, ReviewForm
 from .models import Product, Categories, Profile, CartItem, Order, OrderItem, Review, Contact, Newsletter, Wishlist, Payment
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
-from django.contrib.auth.views import LoginView, LogoutView
+# from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.core.mail import send_mail
 from django.contrib import messages
+from django.db import IntegrityError
 
 from store import forms
 
@@ -118,37 +119,25 @@ class ProductListView(ListView):
         context['categories'] = Categories.objects.all()
         return context
 
-class LoginCustomView(LoginView):
+class LoginCustomView(FormView):
     template_name = 'store/login.html'
-    authentication_form = LoginForm
+    form_class = LoginForm
     success_url = reverse_lazy('home')
 
     def form_valid(self, form):
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
-        user = authenticate(username=username, password=password)
-        if User.objects.filter(username=username).exists() and authenticate(username=username, password=password) is None:
+        user = authenticate(self.request, username=username, password=password)
+        if user is None:
             form.add_error(None, 'Invalid username or password')
             messages.error(self.request, 'Invalid username or password. Please try again.')
             return self.form_invalid(form)
-        elif user is not None:
-            login(self.request, user)
-            messages.success(self.request, 'You have logged in successfully.')
-            return super().form_valid(form)
-        else:
-            form.add_error(None, 'Invalid username or password')
-            messages.error(self.request, 'Invalid username or password. Please try again.')
-            return self.form_invalid(form)
+        
+        login(self.request, user)
+        messages.success(self.request, 'You have logged in successfully.')
+        return super().form_valid(form)
 
-class LogoutCustomView(LogoutView):
-    template_name = None
-    next_page = reverse_lazy('login')
-
-    def get(self, request, *args, **kwargs):
-        logout(request)
-        return super().get(request, *args, **kwargs)
-
-class RegisterView(CreateView):
+class RegisterView(FormView):
     template_name = 'store/register.html'
     form_class = RegisterForm
     success_url = reverse_lazy('login')
@@ -159,13 +148,11 @@ class RegisterView(CreateView):
         lastname = form.cleaned_data.get('last_name')
         email = form.cleaned_data.get('email')
         password = form.cleaned_data.get('password')
-        
-        if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
-            form.add_error(None, 'Username or email already exists')
-            messages.error(self.request, 'Username or email already exists. Please choose a different username or email.')
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password, first_name=firstname, last_name=lastname)
+        except IntegrityError:
+            form.error(None, 'An error occurred while creating your account. Please try again.')
             return self.form_invalid(form)
-        
-        user = User.objects.create_user(username=username, email=email, password=password, first_name=firstname, last_name=lastname)
         Profile.objects.create(user=user)
         messages.success(self.request, 'Your account has been created successfully. You can now log in.')
         return super().form_valid(form)

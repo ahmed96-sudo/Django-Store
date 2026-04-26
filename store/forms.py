@@ -2,6 +2,8 @@ from django import forms
 from .models import Contact, Review
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 class ContactForm(forms.ModelForm):
     
@@ -27,6 +29,10 @@ class ReviewForm(forms.ModelForm):
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
 class RegisterForm(forms.Form):
     username = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}), label='Username*')
@@ -38,9 +44,24 @@ class RegisterForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        username = cleaned_data.get("username")
+        unlowered_email = cleaned_data.get("email")
+        email = unlowered_email.lower()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirm_password")
 
         if password != confirm_password:
             self.add_error('confirm_password', "Passwords do not match")
-
+        
+        if User.objects.filter(username=username).exists():
+            self.add_error('username', "Username already exists. Please choose a different username.")
+        
+        if User.objects.filter(email=email).exists():
+            self.add_error('email', "Email already exists. Please choose a different email.")
+        if password:
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                self.add_error('password', e)
+        
+        return cleaned_data
