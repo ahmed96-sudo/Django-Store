@@ -5,7 +5,6 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import ContactForm, LoginForm, RegisterForm, ReviewForm
 from .models import Product, Categories, Profile, CartItem, Order, OrderItem, Review, Contact, Newsletter, Wishlist, Payment
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
-# from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.core.mail import send_mail
 from django.contrib import messages
