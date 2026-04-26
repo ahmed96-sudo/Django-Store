@@ -39,6 +39,7 @@ class CartItem(Model):
     user = ForeignKey(User, on_delete=CASCADE)
     product = ForeignKey(Product, on_delete=CASCADE)
     quantity = IntegerField(default=1)
+    itemprice = DecimalField(max_digits=10, decimal_places=2, default=0)
     
     class Meta:
         unique_together = ('user', 'product')

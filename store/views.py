@@ -1,11 +1,11 @@
 import os
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-# from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .forms import ContactForm, LoginForm, RegisterForm, ReviewForm
 from .models import Product, Categories, Profile, CartItem, Order, OrderItem, Review, Contact, Newsletter, Wishlist, Payment
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.db import IntegrityError
@@ -70,7 +70,7 @@ class ProductDetailView(DetailView, CreateView):
     form_class = ReviewForm
 
     def get_success_url(self, **kwargs):
-        return reverse_lazy('product_detail', kwargs={'pk': self.kwargs['pk']})
+        return reverse('product_detail', kwargs={'pk': self.kwargs['pk']})
 
     # Increase product views count
     def get_object(self, queryset=None):
@@ -156,14 +156,21 @@ class RegisterView(FormView):
         messages.success(self.request, 'Your account has been created successfully. You can now log in.')
         return super().form_valid(form)
 
-# class MailErrorView(TemplateView):
-#     template_name = 'store/mailerror.html'
+class CartView(LoginRequiredMixin, ListView):
+    login_url = reverse_lazy('login')
+    permission_denied_message = "You must be logged in to view your cart."
+    model = CartItem
+    template_name = 'store/cart.html'
+    context_object_name = 'cart_items'
 
-# @login_required
-# def cart(request):
-#     cart_items = CartItem.objects.filter(user=request.user)
-#     total_price = sum(item.product.price * item.quantity for item in cart_items)
-#     return render(request, 'store/cart.html', {'cart_items': cart_items, 'total_price': total_price})
+    def get_queryset(self):
+        return CartItem.objects.filter(user=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cart_items = self.get_queryset()
+        context['total_price'] = sum(item.itemprice for item in cart_items)
+        return context
 
 # @login_required
 # def checkout(request):
