@@ -1,5 +1,5 @@
 from django.urls import path
-from django.contrib.auth.views import LogoutView
+from django.contrib.auth.views import LogoutView, PasswordResetView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView, PasswordChangeView, PasswordChangeDoneView
 from . import views
 
 urlpatterns = [
@@ -11,11 +11,17 @@ urlpatterns = [
     path('product/<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('cart/', views.CartView.as_view(), name='cart'),
     path('add-to-cart/', views.AddToCartView.as_view(), name='add_to_cart'),
+    path('password-reset/', PasswordResetView.as_view(template_name='registration_pass/password_reset_form.html', email_template_name='registration_pass/password_reset_email.html', subject_template_name='registration_pass/password_reset_subject.txt'), name='password_reset'),
+    path('password-reset/done/', PasswordResetDoneView.as_view(template_name='registration_pass/password_reset_done.html'), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='registration_pass/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('reset/done/', PasswordResetCompleteView.as_view(template_name='registration_pass/password_reset_complete.html'), name='password_reset_complete'),
     # path('remove-from-cart/<int:cart_item_id>/', views.remove_from_cart, name='remove_from_cart'),
     # path('update-cart/<int:cart_item_id>/', views.update_cart, name='update_cart'),
     # path('checkout/', views.checkout, name='checkout'),
     # path('order-confirmation/', views.order_confirmation, name='order_confirmation'),
-    # path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/change-password', PasswordChangeView.as_view(), name='password_change'),
+    path('profile/change-password-done', PasswordChangeDoneView.as_view(), name='password_change_done'),
     path('contact/', views.ContactView.as_view(), name='contact'),
     path('thanks/', views.ThanksView.as_view(), name='thanks'),
     # path('add-to-cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),

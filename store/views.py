@@ -211,6 +211,17 @@ class AddToCartView(LoginRequiredMixin, View):
         messages.success(request, f'Added {product.name} to your cart.')
         return redirect('product_list')
 
+class ProfileView(LoginRequiredMixin, DetailView):
+    login_url = reverse_lazy('login')
+    permission_denied_message = "You must be logged in to view your Profile."
+    model = Profile
+    template_name = 'store/profile.html'
+    context_object_name = 'profile'
+    
+    def get_object(self, queryset=None):
+        username = self.request.user.username
+        return Profile.objects.filter(user__username=username).first()
+
 # @login_required
 # def checkout(request):
 #     cart_items = CartItem.objects.filter(user=request.user)
