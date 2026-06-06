@@ -22,11 +22,12 @@
             </thead>
             <tbody>
                 {% for item in cart_items %}
-                    <tr>
+                    <tr id="{{ item.id }}">
                         <td>{{ item.product.name }}</td>
                         <td>${{ item.product.price }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>${{ item.itemprice }}</td>
+                        {% comment %} <td><a href="{% url 'remove_from_cart' id=item.id %}"></a></td> {% endcomment %}
                     </tr>
                 {% endfor %}
             </tbody>

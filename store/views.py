@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.db.models import F
 from django.shortcuts import redirect, get_object_or_404
+# from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
 
 
 # Create your views here.
@@ -221,6 +222,45 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         username = self.request.user.username
         return Profile.objects.filter(user__username=username).first()
+
+# class RemoveCartView(LoginRequiredMixin, View):
+#     login_url = reverse_lazy('login')
+#     permission_denied_message = "You must be logged in to remove items from your cart."
+    
+#     def dispatch(self, request, *args, **kwargs):
+#         if not request.user.is_authenticated:
+#             messages.error(request, 'You must be logged in to remove items from your cart.')
+#             return redirect('login')
+#         if request.method != 'POST':
+#             messages.error(request, 'Invalid request method.')
+#             return redirect('product_list')
+#         return super().dispatch(request, *args, **kwargs)
+    
+#     def post(self, request, *args, **kwargs):
+#         cart_id = kwargs['cart_item_id']
+#         if not product_id:
+#             messages.error(request, 'Invalid product selection.')
+#             return redirect('cart')
+#         product = get_object_or_404(Product, id=product_id)
+#         Product.objects.filter(id=product.id).update(stock=F('stock') + 1)
+
+#         cart_item = CartItem.objects.get(user=request.user, product=product, defaults={'quantity': 1, 'itemprice': product.price})
+#         if not created:
+#             cart_item.quantity -= 1
+#             cart_item.itemprice -= product.price
+#             cart_item.save()
+#             # cart_item.delete()
+        
+#         messages.success(request, f'Removed {product.name} to your cart.')
+#         return redirect('cart')
+
+# class ChangingPassView(LoginRequiredMixin, PasswordChangeView):
+#     template_name='registration_pass/password_change_form.html'
+    
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['user'] = self.request.user.username
+#         return context
 
 # @login_required
 # def checkout(request):
