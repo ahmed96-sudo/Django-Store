@@ -2,6 +2,7 @@ from django.db.models import Model, Index, EmailField, CharField, DecimalField, 
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
 
 # Create your models here.
 
@@ -38,8 +39,8 @@ class Profile(Model):
 class CartItem(Model):
     user = ForeignKey(User, on_delete=CASCADE)
     product = ForeignKey(Product, on_delete=CASCADE)
-    quantity = PositiveIntegerField(default=1)
-    itemprice = DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantity = PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    itemprice = DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0.00'))])
     # expiry_date = DateTimeField(default=timezone.now() + timezone.timedelta(hours=1))
     
     class Meta:

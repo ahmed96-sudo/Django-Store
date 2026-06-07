@@ -27,7 +27,8 @@
                         <td>${{ item.product.price }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>${{ item.itemprice }}</td>
-                        {% comment %} <td><a href="{% url 'remove_from_cart' id=item.id %}"></a></td> {% endcomment %}
+                        <td><form action="{% url 'update_cart' %}" method="post">{% csrf_token %}<input type="hidden" name="cart_id" value="{{ item.id }}"><input type="hidden" name="product_id" value="{{ item.product_id }}"><input type="number" name="new_qtn" required min="1" value="{{ item.quantity }}"><button type="submit">update product</button></form></td>
+                        <td><form action="{% url 'remove_from_cart' %}" method="post">{% csrf_token %}<input type="hidden" name="cart_id" value="{{ item.id }}"><button type="submit">remove product</button></form></td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -223,36 +223,107 @@ class ProfileView(LoginRequiredMixin, DetailView):
         username = self.request.user.username
         return Profile.objects.filter(user__username=username).first()
 
-# class RemoveCartView(LoginRequiredMixin, View):
-#     login_url = reverse_lazy('login')
-#     permission_denied_message = "You must be logged in to remove items from your cart."
+class RemoveCartView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
+    permission_denied_message = "You must be logged in to remove items from your cart."
     
-#     def dispatch(self, request, *args, **kwargs):
-#         if not request.user.is_authenticated:
-#             messages.error(request, 'You must be logged in to remove items from your cart.')
-#             return redirect('login')
-#         if request.method != 'POST':
-#             messages.error(request, 'Invalid request method.')
-#             return redirect('product_list')
-#         return super().dispatch(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'You must be logged in to remove items from your cart.')
+            return redirect('login')
+        if request.method != 'POST':
+            messages.error(request, 'Invalid request method.')
+            return redirect('product_list')
+        return super().dispatch(request, *args, **kwargs)
     
-#     def post(self, request, *args, **kwargs):
-#         cart_id = kwargs['cart_item_id']
-#         if not product_id:
-#             messages.error(request, 'Invalid product selection.')
-#             return redirect('cart')
-#         product = get_object_or_404(Product, id=product_id)
-#         Product.objects.filter(id=product.id).update(stock=F('stock') + 1)
+    def post(self, request, *args, **kwargs):
+        cart_id = self.request.POST.get('cart_id')
+        if not cart_id:
+            messages.error(request, 'Invalid Cart selection.')
+            return redirect('cart')
+        cartItem = get_object_or_404(CartItem, id=cart_id)
+        product_obj = get_object_or_404(Product, id=cart_id.product_id)
+        update_stock = Product.objects.filter(id=product_obj.id).update(stock=F('stock') + cartItem.quantity)
+        if (cartItem.delete()) and (update_stock):
+            messages.success(request, f'Removed {product_obj.name} from your cart.')
+            return redirect('cart')
+        else:
+            messages.error(request, f"Couldn't remove {product_obj.name} from your cart.")
+            return redirect('cart')
 
-#         cart_item = CartItem.objects.get(user=request.user, product=product, defaults={'quantity': 1, 'itemprice': product.price})
-#         if not created:
-#             cart_item.quantity -= 1
-#             cart_item.itemprice -= product.price
-#             cart_item.save()
-#             # cart_item.delete()
+class UpdateCartValue(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
+    permission_denied_message = "You must be logged in to remove items from your cart."
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'You must be logged in to remove items from your cart.')
+            return redirect('login')
+        if request.method != 'POST':
+            messages.error(request, 'Invalid request method.')
+            return redirect('product_list')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        cart_id = int(request.POST.get('cart_id'))
+        new_qtn = int(request.POST.get('new_qtn', 0))
+        product_id = int(request.POST.get('product_id'))
+
+        if not cart_id or not new_qtn or not product_id:
+            messages.error(request, 'Invalid product/cart selection.')
+            return redirect('cart')
+
+        if new_qtn < 0:
+            messages.error(request, 'Invalid New Quantity. Only Positive Numbers accepted.')
+            return redirect('cart')
+
+        product = get_object_or_404(Product, id=product_id)
+        cart_item = get_object_or_404(CartItem, id=cart_id)
+        initial_quantity = cart_item.quantity
+
+        # Check if the new quantity exceeds the available stock
+        whole_stock = initial_quantity
+        if new_qtn > (initial_quantity + product.stock):
+            messages.error(request, f"Couldn't update product {product.name} in your cart. There are only {product.stock} items left in stock.")
+            return redirect('cart')
+
+        if new_qtn == 0:
+            # Remove item from cart and adjust stock
+            update_stock = Product.objects.filter(id=product.id).update(stock=F('stock') + initial_quantity)
+            if cart_item.delete() and update_stock:
+                messages.success(request, f'Removed {product.name} from your cart.')
+            else:
+                messages.error(request, f"Couldn't remove {product.name} from your cart.")
+            return redirect('cart')
         
-#         messages.success(request, f'Removed {product.name} to your cart.')
-#         return redirect('cart')
+        # Update quantity in the cart
+        if new_qtn < initial_quantity:
+            # Decrease stock based on the difference in quantity
+            update_stock = Product.objects.filter(id=product_id).update(stock=F('stock') + (initial_quantity - new_qtn))
+            if update_stock:
+                cart_item.quantity = new_qtn
+                cart_item.itemprice = product.price * new_qtn
+                cart_item.save()
+                messages.success(request, f'Quantity of product {product.name} has been updated.')
+            else:
+                messages.error(request, f"Couldn't update product {product.name} in your cart.")
+        elif new_qtn > initial_quantity:
+            # Increase stock based on the difference in quantity
+            if new_qtn > (initial_quantity + product.stock):
+                messages.error(request, f"Couldn't update product {product.name} in your cart. There are only {product.stock} items left in stock.")
+                return redirect('cart')
+            update_stock = Product.objects.filter(id=product_id).update(stock=F('stock') - (new_qtn - initial_quantity))
+            if update_stock:
+                cart_item.quantity = new_qtn
+                cart_item.itemprice = product.price * new_qtn
+                cart_item.save()
+                messages.success(request, f'Quantity of product {product.name} has been updated.')
+            else:
+                messages.error(request, f"Couldn't update product {product.name} in your cart.")
+        else:
+            messages.success(request, f'Quantity of product {product.name} has been updated.')
+
+        return redirect('cart')
 
 # class ChangingPassView(LoginRequiredMixin, PasswordChangeView):
 #     template_name='registration_pass/password_change_form.html'
